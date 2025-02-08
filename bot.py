@@ -1,5 +1,5 @@
 import logging
-from telegram import Update, ReplyKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 import os
 
@@ -14,13 +14,50 @@ logger = logging.getLogger(__name__)
 # تعریف دیکشنری برای ذخیره کد ملی هر کاربر
 user_national_code = {}
 
+# لیست درمانگاه‌ها، پزشکان و شیفت‌ها
+clinics = ['درمانگاه 1', 'درمانگاه 2', 'درمانگاه 3']
+doctors = {
+    'درمانگاه 1': ['پزشک 1', 'پزشک 2'],
+    'درمانگاه 2': ['پزشک 3', 'پزشک 4'],
+    'درمانگاه 3': ['پزشک 5', 'پزشک 6']
+}
+shifts = {
+    'پزشک 1': ['شیفت 1', 'شیفت 2'],
+    'پزشک 2': ['شیفت 1', 'شیفت 3'],
+    'پزشک 3': ['شیفت 2', 'شیفت 4'],
+    'پزشک 4': ['شیفت 3', 'شیفت 5'],
+    'پزشک 5': ['شیفت 1', 'شیفت 4'],
+    'پزشک 6': ['شیفت 2', 'شیفت 5']
+}
+
 # منو اصلی با گزینه‌ها
 def get_main_menu():
-    return ReplyKeyboardMarkup([['رزرو نوبت', 'تغییر کد ملی'], ['کمک']], one_time_keyboard=True)
+    return InlineKeyboardMarkup([[
+        InlineKeyboardButton("رزرو نوبت", callback_data='book'),
+        InlineKeyboardButton("تغییر کد ملی", callback_data='set_national_code')
+    ], [
+        InlineKeyboardButton("کمک", callback_data='help')
+    ]])
+
+# منوی درمانگاه‌ها
+def get_clinics_menu():
+    keyboard = [[InlineKeyboardButton(clinic, callback_data=f'clinic_{clinic}')] for clinic in clinics]
+    return InlineKeyboardMarkup(keyboard)
+
+# منوی پزشکان بر اساس درمانگاه انتخاب‌شده
+def get_doctors_menu(clinic):
+    doctors_list = doctors.get(clinic, [])
+    keyboard = [[InlineKeyboardButton(doctor, callback_data=f'doctor_{doctor}')] for doctor in doctors_list]
+    return InlineKeyboardMarkup(keyboard)
+
+# منوی شیفت‌ها بر اساس پزشک انتخاب‌شده
+def get_shifts_menu(doctor):
+    shifts_list = shifts.get(doctor, [])
+    keyboard = [[InlineKeyboardButton(shift, callback_data=f'shift_{shift}')] for shift in shifts_list]
+    return InlineKeyboardMarkup(keyboard)
 
 # Start command
 async def start(update: Update, context: CallbackContext) -> None:
-    # ارسال پیام خوشامدگویی با منو
     await update.message.reply_text('سلام! من ربات نوبت‌دهی بیمارستان میلاد هستم. لطفاً یک گزینه را انتخاب کنید:', reply_markup=get_main_menu())
 
 # ثبت کد ملی کاربر
@@ -42,14 +79,8 @@ async def book_appointment(update: Update, context: CallbackContext) -> None:
     national_code = user_national_code[user_id]
     await update.message.reply_text(f'در حال جستجو برای نوبت با کد ملی {national_code}...')
 
-    # فراخوانی تابع رزرو نوبت
-    result = await start_appointment_process(national_code)
-
-    await update.message.reply_text(result)
-
-# دستور تغییر کد ملی
-async def change_national_code(update: Update, context: CallbackContext) -> None:
-    await update.message.reply_text('لطفاً کد ملی جدید خود را وارد کنید.')
+    # ارسال منوی درمانگاه‌ها
+    await update.message.reply_text("لطفاً درمانگاه خود را انتخاب کنید:", reply_markup=get_clinics_menu())
 
 # دستور کمک
 async def help_command(update: Update, context: CallbackContext) -> None:
@@ -59,12 +90,29 @@ async def help_command(update: Update, context: CallbackContext) -> None:
     """
     await update.message.reply_text(help_text)
 
-# تابع رزرو نوبت (شما باید این تابع را برای شروع فرآیند نوبت‌گیری از سایت میلاد اضافه کنید)
-async def start_appointment_process(national_code: str) -> str:
-    # این تابع باید تمامی مراحل رزرو نوبت را با استفاده از Selenium مدیریت کند
-    # که به طور مداوم سایت را بررسی می‌کند
-    # و نوبت را رزرو می‌کند.
-    return "رزرو نوبت با موفقیت انجام شد."
+# واکنش به انتخاب درمانگاه
+async def clinic_callback(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    await query.answer()
+    clinic = query.data.split('_')[1]  # دریافت نام درمانگاه انتخاب‌شده
+    # ارسال منوی پزشکان مربوط به درمانگاه
+    await query.edit_message_text(f"لطفاً پزشک مورد نظر خود را از {clinic} انتخاب کنید:", reply_markup=get_doctors_menu(clinic))
+
+# واکنش به انتخاب پزشک
+async def doctor_callback(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    await query.answer()
+    doctor = query.data.split('_')[1]  # دریافت نام پزشک انتخاب‌شده
+    # ارسال منوی شیفت‌ها مربوط به پزشک
+    await query.edit_message_text(f"لطفاً شیفت مورد نظر برای {doctor} را انتخاب کنید:", reply_markup=get_shifts_menu(doctor))
+
+# واکنش به انتخاب شیفت
+async def shift_callback(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    await query.answer()
+    shift = query.data.split('_')[1]  # دریافت نام شیفت انتخاب‌شده
+    # تایید رزرو نوبت
+    await query.edit_message_text(f"نوبت شما با شیفت {shift} رزرو شد.")
 
 # Main function to start the bot
 def main():
@@ -75,11 +123,15 @@ def main():
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, set_national_code))
     application.add_handler(CommandHandler("book", book_appointment))
     application.add_handler(CommandHandler("help", help_command))
-    
-    # Handlers for menu options
-    application.add_handler(MessageHandler(filters.Regex('رزرو نوبت'), book_appointment))
-    application.add_handler(MessageHandler(filters.Regex('تغییر کد ملی'), change_national_code))
-    application.add_handler(MessageHandler(filters.Regex('کمک'), help_command))
+
+    # Handlers for callback queries (Inline Keyboard)
+    application.add_handler(MessageHandler(filters.Regex('book'), book_appointment))
+    application.add_handler(MessageHandler(filters.Regex('set_national_code'), set_national_code))
+    application.add_handler(MessageHandler(filters.Regex('help'), help_command))
+
+    application.add_handler(CallbackQueryHandler(clinic_callback, pattern='^clinic_'))
+    application.add_handler(CallbackQueryHandler(doctor_callback, pattern='^doctor_'))
+    application.add_handler(CallbackQueryHandler(shift_callback, pattern='^shift_'))
 
     # Start the Bot
     application.run_polling()
