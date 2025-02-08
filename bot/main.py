@@ -1,33 +1,24 @@
 import logging
-from telegram import Update
-from telegram.ext import Application, CommandHandler, CallbackContext
+from aiogram import Bot, Dispatcher, types
+from aiogram.types import ParseMode
+from aiogram.utils import executor
 
 # راه اندازی لاگینگ
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# دستور شروع
-async def start(update: Update, context: CallbackContext):
-    await update.message.reply_text("سلام! من ربات شما هستم.")
+# توکن ربات تلگرام
+TOKEN = '8049424440:AAGBPPfMynEI-8PRsZdA-XfcvUauOxwvAzY'
 
-# تابع main
-async def main():
-    # توکن ربات تلگرام خود را اینجا قرار دهید
-    token = '8049424440:AAGBPPfMynEI-8PRsZdA-XfcvUauOxwvAzY'
+# ایجاد نمونه‌ای از Bot و Dispatcher
+bot = Bot(token=TOKEN)
+dp = Dispatcher(bot)
 
-    # ایجاد نمونه‌ای از Application
-    application = Application.builder().token(token).build()
-
-    # اضافه کردن دستور /start
-    application.add_handler(CommandHandler("start", start))
-
-    # شروع polling برای دریافت پیام‌ها
-    await application.run_polling()
+# دستور start
+@dp.message_handler(commands=['start'])
+async def send_welcome(message: types.Message):
+    await message.reply("سلام! من ربات شما هستم.")
 
 if __name__ == "__main__":
-    try:
-        # اجرای ربات
-        import asyncio
-        asyncio.run(main())
-    except Exception as e:
-        logger.error(f"Error in bot: {e}")
+    # اجرای ربات
+    executor.start_polling(dp, skip_updates=True)
