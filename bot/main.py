@@ -1,141 +1,56 @@
-import sqlite3
-import threading
+import logging
+from telegram.ext import Updater, CommandHandler, MessageHandler, filters, CallbackContext
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
-from apscheduler.schedulers.background import BackgroundScheduler
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-import time
 
-# تنظیمات دیتابیس
-conn = sqlite3.connect("users.db", check_same_thread=False)
-cursor = conn.cursor()
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS users (
-    user_id INTEGER PRIMARY KEY,
-    national_code TEXT
-)
-""")
-conn.commit()
+# فعال کردن logging برای نمایش خطاها و اطلاعات
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-def save_national_code(user_id, national_code):
-    cursor.execute("REPLACE INTO users (user_id, national_code) VALUES (?, ?)", (user_id, national_code))
-    conn.commit()
+# دستور start که وقتی کاربر "/start" را ارسال می‌کند، اجرا می‌شود
+def start(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text('سلام! من ربات نوبت‌گیری بیمارستان میلاد هستم.')
 
-def get_national_code(user_id):
-    cursor.execute("SELECT national_code FROM users WHERE user_id=?", (user_id,))
-    result = cursor.fetchone()
-    return result[0] if result else None
+# دستور برای تغییر کد ملی
+def change_id(update: Update, context: CallbackContext) -> None:
+    # اینجا می‌توانید منطق تغییر کد ملی را پیاده‌سازی کنید
+    update.message.reply_text('لطفاً کد ملی جدید خود را وارد کنید.')
 
-def delete_national_code(user_id):
-    cursor.execute("DELETE FROM users WHERE user_id=?", (user_id,))
-    conn.commit()
-
-# تلگرام بات
-def start(update: Update, context: CallbackContext):
-    update.message.reply_text("سلام! لطفاً کد ملی خود را وارد کنید تا نوبت شما بررسی شود.")
-
-def set_national_code(update: Update, context: CallbackContext):
-    user_id = update.message.chat_id
-    national_code = update.message.text
-
-    if len(national_code) != 10 or not national_code.isdigit():
-        update.message.reply_text("❌ کد ملی نامعتبر است! لطفاً یک کد ۱۰ رقمی وارد کنید.")
-        return
-
-    save_national_code(user_id, national_code)
-    update.message.reply_text(f"✅ کد ملی شما ذخیره شد: {national_code}")
-
-def get_status(update: Update, context: CallbackContext):
-    user_id = update.message.chat_id
-    national_code = get_national_code(user_id)
-
-    if national_code:
-        update.message.reply_text(f"✅ کد ملی شما: {national_code}\nربات در حال بررسی نوبت‌هاست...")
+# هندلر برای بررسی متن پیام‌ها و پاسخ به آن‌ها
+def handle_message(update: Update, context: CallbackContext) -> None:
+    text = update.message.text.lower()
+    
+    # بررسی اگر کاربر کلمه خاصی ارسال کرد
+    if 'نوبت' in text:
+        update.message.reply_text('در حال بررسی نوبت‌ها...')
+        # اینجا منطق بررسی نوبت‌ها با استفاده از Selenium می‌آید.
     else:
-        update.message.reply_text("❌ شما هنوز کد ملی خود را ثبت نکرده‌اید!")
+        update.message.reply_text(f'شما نوشتید: {update.message.text}')
 
-def delete_national_code_command(update: Update, context: CallbackContext):
-    user_id = update.message.chat_id
-    delete_national_code(user_id)
-    update.message.reply_text("✅ کد ملی شما حذف شد. اگر می‌خواهید دوباره ثبت کنید، کد ملی جدید را ارسال کنید.")
+# هندلر خطاها
+def error(update: Update, context: CallbackContext) -> None:
+    logger.warning('حدس زده شده خطا: %s', context.error)
 
-# تنظیم دستورات تلگرام
+# تابع اصلی که ربات را اجرا می‌کند
 def main():
-    updater = Updater("TELEGRAM_BOT_TOKEN", use_context=True)
-    dp = updater.dispatcher
+    # توکن ربات تلگرام شما
+    token = "YOUR_BOT_API_TOKEN"
 
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, set_national_code))
-    dp.add_handler(CommandHandler("status", get_status))
-    dp.add_handler(CommandHandler("delete", delete_national_code_command))
-
+    # ایجاد Updater و Dispatcher
+    updater = Updater(token, use_context=True)
+    dispatcher = updater.dispatcher
+    
+    # اضافه کردن هندلرها
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(CommandHandler("change_id", change_id))
+    dispatcher.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    
+    # هندلر برای خطاها
+    dispatcher.add_error_handler(error)
+    
+    # شروع Polling و فعال‌سازی ربات
     updater.start_polling()
     updater.idle()
 
-threading.Thread(target=main).start()
-
-# اتوماسیون Selenium
-def check_and_book_nobat(national_code):
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
-    driver = webdriver.Chrome(options=options)
-
-    driver.get("https://miladhospital.com/onlineReception")
-    time.sleep(3)
-
-    driver.find_element(By.XPATH, "//button[contains(text(), 'قبول قوانین')]").click()
-    time.sleep(2)
-
-    input_box = driver.find_element(By.NAME, "nationalCode")
-    input_box.send_keys(national_code)
-    input_box.send_keys(Keys.RETURN)
-    time.sleep(5)
-
-    clinics = driver.find_elements(By.CSS_SELECTOR, ".clinic-item")
-    if not clinics:
-        print(f"❌ نوبتی برای کد ملی {national_code} پیدا نشد.")
-        driver.quit()
-        return False
-
-    for clinic in clinics:
-        if "رزرو نوبت" in clinic.text:
-            clinic.click()
-            time.sleep(3)
-            break
-    else:
-        print(f"❌ هیچ درمانگاهی نوبت خالی ندارد برای {national_code}.")
-        driver.quit()
-        return False
-
-    doctors = driver.find_elements(By.CSS_SELECTOR, ".doctor-item")
-    if doctors:
-        doctors[0].click()
-        time.sleep(3)
-
-    shifts = driver.find_elements(By.CSS_SELECTOR, ".shift-item")
-    if shifts:
-        shifts[0].click()
-        time.sleep(3)
-
-    driver.find_element(By.XPATH, "//button[contains(text(), 'تأیید')]").click()
-    time.sleep(3)
-
-    print(f"✅ نوبت با موفقیت برای {national_code} رزرو شد!")
-    driver.quit()
-    return True
-
-scheduler = BackgroundScheduler()
-
-def schedule_nobat_checks():
-    cursor.execute("SELECT national_code FROM users")
-    users = cursor.fetchall()
-
-    for user in users:
-        national_code = user[0]
-        if check_and_book_nobat(national_code):
-            print(f"✅ نوبت برای {national_code} گرفته شد.")
-
-scheduler.add_job(schedule_nobat_checks, "interval", minutes=30)
-scheduler.start()
+if __name__ == '__main__':
+    main()
