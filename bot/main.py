@@ -50,9 +50,16 @@ async def main():
     # شروع Polling و فعال‌سازی ربات
     await application.run_polling()
 
-# به‌طور مستقیم از `application.run_polling()` برای اجرای ربات استفاده می‌کنیم.
+# برای اجرای حلقه رویداد دستی از این کد استفاده می‌کنیم
 if __name__ == '__main__':
     import asyncio
-    # از asyncio.run() استفاده نمی‌کنیم.
-    # فقط تابع main را از طریق Application اجرا می‌کنیم.
-    asyncio.run(main())  # فقط یک حلقه رویداد مدیریت می‌شود و این باید کافی باشد.
+
+    # ایجاد حلقه رویداد دستی
+    loop = asyncio.get_event_loop()
+
+    try:
+        # اجرای main() در حلقه رویداد موجود
+        loop.run_until_complete(main())
+    finally:
+        # بستن حلقه رویداد در پایان
+        loop.close()
