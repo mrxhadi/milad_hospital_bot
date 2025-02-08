@@ -1,7 +1,11 @@
+RUN pip install selenium
+RUN pip install python-telegram-bot
+RUN pip install apscheduler
+
 # استفاده از تصویر رسمی Python
 FROM python:3.10-slim
 
-# نصب پکیج‌های سیستم‌عامل برای نصب وابستگی‌های پایتون
+# نصب پیش‌نیازهای سیستم
 RUN apt-get update && apt-get install -y \
     wget \
     unzip \
@@ -17,7 +21,8 @@ RUN apt-get update && apt-get install -y \
     libatk-bridge2.0-0 \
     libatk1.0-0 \
     libnspr4 \
-    libxss1
+    libxss1 \
+    && rm -rf /var/lib/apt/lists/*
 
 # تعیین دایرکتوری کاری داخل کانتینر
 WORKDIR /app
