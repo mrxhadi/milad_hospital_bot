@@ -1,19 +1,14 @@
-import subprocess
-from telegram import Update
-from telegram.ext import Application, CommandHandler, CallbackContext
+import logging
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
 
-# تابع برای بررسی نسخه‌ی python-telegram-bot
-def get_pip_version():
-    result = subprocess.run(["pip", "show", "python-telegram-bot"], stdout=subprocess.PIPE)
-    return result.stdout.decode()
+# تنظیمات لاگینگ
+logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                    level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # دستور start
-async def start(update: Update, context: CallbackContext) -> None:
-    await update.message.reply_text("سلام! من ربات بیمارستان میلاد هستم.")
-    
-    # بررسی نسخه‌ی کتابخانه python-telegram-bot و ارسال آن به کاربر
-    pip_version = get_pip_version()
-    await update.message.reply_text(f"نسخه python-telegram-bot: \n{pip_version}")
+async def start(update, context):
+    await update.message.reply_text('سلام! من ربات بیمارستان میلاد هستم.')
 
 # تابع اصلی برای راه‌اندازی ربات
 async def main():
@@ -26,9 +21,15 @@ async def main():
     # ثبت هندلرها
     application.add_handler(CommandHandler("start", start))
 
-    # راه‌اندازی polling برای دریافت پیام‌ها
-    await application.run_polling()
+    try:
+        # اجرای polling برای دریافت پیام‌ها
+        await application.run_polling()
+    except Exception as e:
+        logger.error(f"Error in bot: {e}")
+    finally:
+        # پس از اتمام، ربات باید بسته شود
+        await application.shutdown()
 
 if __name__ == "__main__":
     import asyncio
-    asyncio.run(main())
+    asyncio.run(main())  # از asyncio.run برای اجرای main استفاده می‌کنیم
