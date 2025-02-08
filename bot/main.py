@@ -1,41 +1,28 @@
-import logging
-from aiogram import Bot, Dispatcher, types
-from aiogram.types import ParseMode
-from aiogram.contrib.middlewares.logging import LoggingMiddleware
-from aiogram.utils import executor
-from dotenv import load_dotenv
-import os
+import telepot
+from telepot.loop import MessageLoop
 
-# بارگذاری متغیرهای محیطی از فایل .env
-load_dotenv()
+# توکن ربات
+TOKEN = '8049424440:AAGBPPfMynEI-8PRsZdA-XfcvUauOxwvAzY'
 
-# تنظیمات لاگ‌گیری
-logging.basicConfig(level=logging.INFO)
+# تابعی که برای دریافت پیام‌ها و پاسخ به آن‌ها استفاده می‌شود
+def handle(msg):
+    chat_id = msg['chat']['id']
+    text = msg['text']
 
-# توکن ربات از متغیر محیطی
-TOKEN = os.getenv("8049424440:AAGBPPfMynEI-8PRsZdA-XfcvUauOxwvAzY")
+    if text.lower() == '/start':
+        bot.sendMessage(chat_id, "سلام! من ربات هستم.")
+    elif text.lower() == '/help':
+        bot.sendMessage(chat_id, "راهنما: می‌توانید دستور /start یا /help را وارد کنید.")
+    else:
+        bot.sendMessage(chat_id, "پیام شما دریافت شد!")
 
-# ایجاد نمونه‌های Bot و Dispatcher
-bot = Bot(token=TOKEN)
-dp = Dispatcher(bot)
+# ایجاد یک نمونه از ربات
+bot = telepot.Bot(TOKEN)
 
-# ثبت Middleware برای لاگ‌گیری
-dp.middleware.setup(LoggingMiddleware())
+# راه‌اندازی MessageLoop برای گوش دادن به پیام‌ها
+MessageLoop(bot, handle).run_as_thread()
 
-# دستورات ربات
-@dp.message_handler(commands=['start'])
-async def send_welcome(message: types.Message):
-    await message.answer("سلام! من ربات هستم. چطور می‌توانم به شما کمک کنم؟")
-
-@dp.message_handler(commands=['help'])
-async def send_help(message: types.Message):
-    await message.answer("برای استفاده از ربات، فقط دستورات /start و /help را وارد کنید.")
-
-@dp.message_handler(content_types=types.ContentType.TEXT)
-async def echo_message(message: types.Message):
-    await message.answer(f"شما گفتید: {message.text}")
-
-# راه‌اندازی ربات
-if __name__ == '__main__':
-    from aiogram import executor
-    executor.start_polling(dp, skip_updates=True)
+# ادامه کار برنامه (برای جلوگیری از بستن بلافاصله)
+import time
+while 1:
+    time.sleep(10)
