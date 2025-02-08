@@ -1,4 +1,4 @@
 python-telegram-bot==20.1
 selenium==4.1.0
 webdriver-manager==3.5.0
-requests==2.26.0
+python-dotenv==0.21.0
