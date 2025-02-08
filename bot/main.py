@@ -4,42 +4,35 @@ from aiogram.types import ParseMode
 from aiogram.utils import executor
 import asyncio
 
-# راه اندازی لاگینگ
+API_TOKEN = '8049424440:AAGBPPfMynEI-8PRsZdA-XfcvUauOxwvAzY'  # توکن ربات شما
+
+# تنظیمات لاگ
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
-# توکن ربات تلگرام
-TOKEN = '8049424440:AAGBPPfMynEI-8PRsZdA-XfcvUauOxwvAzY'
-
-# ایجاد نمونه‌ای از Bot و Dispatcher
-bot = Bot(token=TOKEN)
+# ایجاد شیء ربات و دیسپچر
+bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 
-# دستور start
-@dp.message_handler(commands=['start'])
+# دستورات ربات
+@dp.message_handler(commands=['start', 'help'])
 async def send_welcome(message: types.Message):
-    await message.reply("سلام! من ربات شما هستم. لطفاً کد ملی خود را وارد کنید.")
+    await message.reply("سلام! من ربات شما هستم. از من چه کمکی می‌خواهید؟")
 
-# دستور وارد کردن کد ملی
-@dp.message_handler()
-async def handle_message(message: types.Message):
-    # اینجا بررسی می‌کنیم که اگر پیام یک عدد 10 رقمی بود (کد ملی)
-    if len(message.text) == 10 and message.text.isdigit():
-        # ذخیره کد ملی در دیتابیس یا هر چیزی که می‌خواهید
-        await message.reply(f"کد ملی شما {message.text} ثبت شد!")
-    else:
-        await message.reply("لطفاً یک کد ملی معتبر وارد کنید.")
+# ارسال پیام با استفاده از Markdown
+@dp.message_handler(commands=['markdown'])
+async def send_markdown(message: types.Message):
+    await message.answer("این یک پیام *فرمت شده* است.", parse_mode=ParseMode.MARKDOWN)
+
+# ارسال پیام با استفاده از HTML
+@dp.message_handler(commands=['html'])
+async def send_html(message: types.Message):
+    await message.answer("این یک پیام <b>فرمت شده</b> است.", parse_mode=ParseMode.HTML)
 
 # تابع اصلی که ربات را اجرا می‌کند
-async def on_start():
-    try:
-        # در اینجا می‌توانید برای راه‌اندازی متدها و عملیات‌های دیگر در نظر بگیرید
-        logger.info("ربات در حال اجراست...")
-        await dp.start_polling()
-    except Exception as e:
-        logger.error(f"خطا در راه‌اندازی ربات: {e}")
-        await bot.close()
+async def on_startup(dp):
+    logging.info("Starting bot...")
 
-if __name__ == "__main__":
-    # اجرا با استفاده از asyncio
-    asyncio.run(on_start())
+# اجرای ربات
+if __name__ == '__main__':
+    from aiogram import executor
+    executor.start_polling(dp, on_startup=on_startup)
