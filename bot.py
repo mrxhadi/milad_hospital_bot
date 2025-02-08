@@ -1,6 +1,6 @@
 import logging
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import Updater, CommandHandler, MessageHandler, filters, CallbackContext
 from dotenv import load_dotenv
 import os
 
@@ -62,7 +62,7 @@ def main():
 
     # Handlers for commands
     dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, set_national_code))
+    dispatcher.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
     dispatcher.add_handler(CommandHandler("book", book_appointment))
 
     # Start the Bot
