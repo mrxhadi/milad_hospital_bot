@@ -1,17 +1,19 @@
-# استفاده از تصویر پایه Python
+# انتخاب تصویر پایه
 FROM python:3.10-slim
 
-# نصب ابزارهای لازم
+# نصب وابستگی‌ها
 RUN apt-get update && apt-get install -y \
     gcc \
     libffi-dev \
     && apt-get clean
 
-# تنظیمات برای کپی کردن فایل‌ها
+# ایجاد و تنظیم دایرکتوری کاری
 WORKDIR /app
+
+# کپی کردن فایل‌های پروژه
 COPY . .
 
-# نصب پکیج‌ها بدون محیط مجازی
+# نصب پکیج‌ها از requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # اجرای برنامه
