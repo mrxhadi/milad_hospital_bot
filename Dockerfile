@@ -1,37 +1,33 @@
-# استفاده از تصویر رسمی Python
+# مرحله اول: استفاده از تصویر پایه Python
 FROM python:3.10-slim
 
-# نصب پیش‌نیازهای سیستم
+# نصب پکیج‌های مورد نیاز
 RUN apt-get update && apt-get install -y \
-    wget \
+    curl \
     unzip \
     chromium \
-    chromium-driver \
-    libgdk-pixbuf2.0-0 \
-    libx11-xcb1 \
-    libgbm1 \
-    libxcomposite1 \
-    libxrandr2 \
-    libasound2 \
-    libnss3 \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libnspr4 \
-    libxss1 \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean
 
-# تعیین دایرکتوری کاری داخل کانتینر
+# نصب پکیج‌های مورد نیاز برای Selenium
+RUN pip install --upgrade pip
+RUN pip install selenium python-telegram-bot aiogram
+
+# تنظیم متغیرهای محیطی برای Selenium و Chrome
+ENV DISPLAY=:99
+ENV CHROMIUM_BIN=/usr/bin/chromium
+ENV CHROMIUM_PATH=/usr/lib/chromium
+
+# ایجاد پوشه برای اپلیکیشن
 WORKDIR /app
 
-# کپی کردن فایل‌های پروژه به کانتینر
+# کپی کردن فایل‌های پروژه به داکر
 COPY . /app
 
-# نصب پکیج‌های مورد نیاز
-RUN pip install --no-cache-dir -r requirements.txt
+# نصب نیازمندی‌ها از requirements.txt
+RUN pip install -r requirements.txt
 
-# تنظیم متغیرهای محیطی برای استفاده از کروم در Selenium
-ENV CHROME_BIN=/usr/bin/chromium
-ENV CHROME_DRIVER=/usr/bin/chromedriver
+# باز کردن پورت‌های مورد نیاز
+EXPOSE 8000
 
-# دستور اجرا
+# اجرای فایل main.py
 CMD ["python", "bot/main.py"]
