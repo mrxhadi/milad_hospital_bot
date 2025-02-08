@@ -1,7 +1,3 @@
-RUN pip install selenium
-RUN pip install python-telegram-bot
-RUN pip install apscheduler
-
 # استفاده از تصویر رسمی Python
 FROM python:3.10-slim
 
