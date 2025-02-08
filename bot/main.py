@@ -50,6 +50,8 @@ async def main():
     # شروع Polling و فعال‌سازی ربات
     await application.run_polling()
 
+# برای جلوگیری از تداخل حلقه رویداد، نیازی به asyncio.run() نیست.
 if __name__ == '__main__':
     import asyncio
-    asyncio.run(main())
+    # به جای استفاده از asyncio.run()، به‌طور مستقیم از application.run_polling() استفاده می‌کنیم.
+    asyncio.get_event_loop().run_until_complete(main())
