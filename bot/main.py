@@ -1,38 +1,28 @@
-import logging
-from aiogram import Bot, Dispatcher, types
-from aiogram.types import ParseMode
-from aiogram.utils import executor
-import asyncio
+from telegram import Bot
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
-API_TOKEN = '8049424440:AAGBPPfMynEI-8PRsZdA-XfcvUauOxwvAzY'  # توکن ربات شما
+# توکن ربات
+TOKEN = '8049424440:AAGBPPfMynEI-8PRsZdA-XfcvUauOxwvAzY'
 
-# تنظیمات لاگ
-logging.basicConfig(level=logging.INFO)
+def start(update, context):
+    update.message.reply("سلام! من ربات شما هستم. لطفاً کد ملی خود را وارد کنید.")
 
-# ایجاد شیء ربات و دیسپچر
-bot = Bot(token=API_TOKEN)
-dp = Dispatcher(bot)
+def handle_message(update, context):
+    # اینجا بررسی می‌کنیم که آیا پیام یک عدد ۱۰ رقمی است
+    if len(update.message.text) == 10 and update.message.text.isdigit():
+        update.message.reply(f"کد ملی شما {update.message.text} ثبت شد!")
+    else:
+        update.message.reply("لطفاً یک کد ملی معتبر وارد کنید.")
 
-# دستورات ربات
-@dp.message_handler(commands=['start', 'help'])
-async def send_welcome(message: types.Message):
-    await message.reply("سلام! من ربات شما هستم. از من چه کمکی می‌خواهید؟")
+def main():
+    updater = Updater(token=TOKEN, use_context=True)
 
-# ارسال پیام با استفاده از Markdown
-@dp.message_handler(commands=['markdown'])
-async def send_markdown(message: types.Message):
-    await message.answer("این یک پیام *فرمت شده* است.", parse_mode=ParseMode.MARKDOWN)
+    dispatcher = updater.dispatcher
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
 
-# ارسال پیام با استفاده از HTML
-@dp.message_handler(commands=['html'])
-async def send_html(message: types.Message):
-    await message.answer("این یک پیام <b>فرمت شده</b> است.", parse_mode=ParseMode.HTML)
+    updater.start_polling()
+    updater.idle()
 
-# تابع اصلی که ربات را اجرا می‌کند
-async def on_startup(dp):
-    logging.info("Starting bot...")
-
-# اجرای ربات
 if __name__ == '__main__':
-    from aiogram import executor
-    executor.start_polling(dp, on_startup=on_startup)
+    main()
