@@ -1,26 +1,24 @@
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram.ext import Application, CommandHandler, CallbackContext
 
 # دستور start
-def start(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text("سلام! من ربات بیمارستان میلاد هستم.")
+async def start(update: Update, context: CallbackContext) -> None:
+    await update.message.reply_text("سلام! من ربات بیمارستان میلاد هستم.")
 
 # تابع اصلی برای راه‌اندازی ربات
-def main():
+async def main():
     # توکن ربات تلگرام خود را وارد کنید
     token = "YOUR_BOT_API_TOKEN"
 
-    # راه‌اندازی Updater
-    updater = Updater(token, use_context=True)
+    # راه‌اندازی Application
+    application = Application.builder().token(token).build()
 
     # ثبت هندلرها
-    updater.dispatcher.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("start", start))
 
     # راه‌اندازی polling برای دریافت پیام‌ها
-    updater.start_polling()
-
-    # به‌طور مداوم کار ربات را اجرا نگه می‌دارد
-    updater.idle()
+    await application.run_polling()
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+    asyncio.run(main())
