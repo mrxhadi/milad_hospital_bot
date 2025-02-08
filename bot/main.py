@@ -1,28 +1,41 @@
-from telegram import Bot
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+import logging
+from aiogram import Bot, Dispatcher, types
+from aiogram.types import ParseMode
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
+from aiogram.utils import executor
+from dotenv import load_dotenv
+import os
 
-# توکن ربات
-TOKEN = '8049424440:AAGBPPfMynEI-8PRsZdA-XfcvUauOxwvAzY'
+# بارگذاری متغیرهای محیطی از فایل .env
+load_dotenv()
 
-def start(update, context):
-    update.message.reply("سلام! من ربات شما هستم. لطفاً کد ملی خود را وارد کنید.")
+# تنظیمات لاگ‌گیری
+logging.basicConfig(level=logging.INFO)
 
-def handle_message(update, context):
-    # اینجا بررسی می‌کنیم که آیا پیام یک عدد ۱۰ رقمی است
-    if len(update.message.text) == 10 and update.message.text.isdigit():
-        update.message.reply(f"کد ملی شما {update.message.text} ثبت شد!")
-    else:
-        update.message.reply("لطفاً یک کد ملی معتبر وارد کنید.")
+# توکن ربات از متغیر محیطی
+TOKEN = os.getenv("8049424440:AAGBPPfMynEI-8PRsZdA-XfcvUauOxwvAzY")
 
-def main():
-    updater = Updater(token=TOKEN, use_context=True)
+# ایجاد نمونه‌های Bot و Dispatcher
+bot = Bot(token=TOKEN)
+dp = Dispatcher(bot)
 
-    dispatcher = updater.dispatcher
-    dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+# ثبت Middleware برای لاگ‌گیری
+dp.middleware.setup(LoggingMiddleware())
 
-    updater.start_polling()
-    updater.idle()
+# دستورات ربات
+@dp.message_handler(commands=['start'])
+async def send_welcome(message: types.Message):
+    await message.answer("سلام! من ربات هستم. چطور می‌توانم به شما کمک کنم؟")
 
+@dp.message_handler(commands=['help'])
+async def send_help(message: types.Message):
+    await message.answer("برای استفاده از ربات، فقط دستورات /start و /help را وارد کنید.")
+
+@dp.message_handler(content_types=types.ContentType.TEXT)
+async def echo_message(message: types.Message):
+    await message.answer(f"شما گفتید: {message.text}")
+
+# راه‌اندازی ربات
 if __name__ == '__main__':
-    main()
+    from aiogram import executor
+    executor.start_polling(dp, skip_updates=True)
