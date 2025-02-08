@@ -1,33 +1,32 @@
-# مرحله اول: استفاده از تصویر پایه Python
+# Use the official Python image from Docker Hub
 FROM python:3.10-slim
 
-# نصب پکیج‌های مورد نیاز
-RUN apt-get update && apt-get install -y \
-    curl \
-    unzip \
-    chromium \
-    && apt-get clean
-
-# نصب پکیج‌های مورد نیاز برای Selenium
-RUN pip install --upgrade pip
-RUN pip install selenium python-telegram-bot aiogram
-
-# تنظیم متغیرهای محیطی برای Selenium و Chrome
-ENV DISPLAY=:99
-ENV CHROMIUM_BIN=/usr/bin/chromium
-ENV CHROMIUM_PATH=/usr/lib/chromium
-
-# ایجاد پوشه برای اپلیکیشن
+# Set the working directory in the container
 WORKDIR /app
 
-# کپی کردن فایل‌های پروژه به داکر
+# Copy the current directory contents into the container at /app
 COPY . /app
 
-# نصب نیازمندی‌ها از requirements.txt
-RUN pip install -r requirements.txt
+# Install any necessary dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-# باز کردن پورت‌های مورد نیاز
-EXPOSE 8000
+# Install any other necessary dependencies for Selenium or other needs
+RUN apt-get update && apt-get install -y \
+    curl \
+    gnupg \
+    ca-certificates \
+    fonts-liberation \
+    libappindicator3-1 \
+    libasound2 \
+    libx11-xcb1 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    xdg-utils \
+    wget
 
-# اجرای فایل main.py
+# Set the environment variable for display (needed for headless browser)
+ENV DISPLAY=:99
+
+# Set the command to run your bot
 CMD ["python", "bot/main.py"]
