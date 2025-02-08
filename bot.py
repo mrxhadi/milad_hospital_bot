@@ -1,8 +1,16 @@
 import logging
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from dotenv import load_dotenv
+import os
 
-# Enable logging
+# بارگذاری متغیرهای محیطی از فایل .env (اگر استفاده کنید) یا از Railway
+load_dotenv()
+
+# توکن ربات از متغیر محیطی
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+
+# تنظیمات لاگ‌گیری
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -48,7 +56,7 @@ def start_appointment_process(national_code: str) -> str:
 # Main function to start the bot
 def main():
     # Replace 'YOUR_TOKEN' with your bot's token
-    updater = Updater("YOUR_BOT_TOKEN")
+    updater = Updater(TOKEN)
     
     dispatcher = updater.dispatcher
 
