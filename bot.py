@@ -1,6 +1,6 @@
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext, CallbackQueryHandler
 import os
 
 # بارگذاری توکن از متغیر محیطی
@@ -125,10 +125,6 @@ def main():
     application.add_handler(CommandHandler("help", help_command))
 
     # Handlers for callback queries (Inline Keyboard)
-    application.add_handler(MessageHandler(filters.Regex('book'), book_appointment))
-    application.add_handler(MessageHandler(filters.Regex('set_national_code'), set_national_code))
-    application.add_handler(MessageHandler(filters.Regex('help'), help_command))
-
     application.add_handler(CallbackQueryHandler(clinic_callback, pattern='^clinic_'))
     application.add_handler(CallbackQueryHandler(doctor_callback, pattern='^doctor_'))
     application.add_handler(CallbackQueryHandler(shift_callback, pattern='^shift_'))
