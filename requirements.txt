@@ -1,2 +1,1 @@
-aiogram==21.10
-python-dotenv==0.21.0
+telepot==12.7
