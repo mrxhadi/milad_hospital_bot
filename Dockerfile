@@ -1,6 +1,24 @@
 # استفاده از تصویر رسمی Python
 FROM python:3.10-slim
 
+# نصب پکیج‌های سیستم‌عامل برای نصب وابستگی‌های پایتون
+RUN apt-get update && apt-get install -y \
+    wget \
+    unzip \
+    chromium \
+    chromium-driver \
+    libgdk-pixbuf2.0-0 \
+    libx11-xcb1 \
+    libgbm1 \
+    libxcomposite1 \
+    libxrandr2 \
+    libasound2 \
+    libnss3 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libnspr4 \
+    libxss1
+
 # تعیین دایرکتوری کاری داخل کانتینر
 WORKDIR /app
 
@@ -9,12 +27,6 @@ COPY . /app
 
 # نصب پکیج‌های مورد نیاز
 RUN pip install --no-cache-dir -r requirements.txt
-
-# نصب مرورگر کروم و کروم درایور
-RUN apt-get update && apt-get install -y \
-    wget \
-    unzip \
-    chromium-driver
 
 # تنظیم متغیرهای محیطی برای استفاده از کروم در Selenium
 ENV CHROME_BIN=/usr/bin/chromium
