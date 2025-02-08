@@ -2,7 +2,7 @@ import telepot
 from telepot.loop import MessageLoop
 
 # توکن ربات
-TOKEN = '8049424440:AAGBPPfMynEI-8PRsZdA-XfcvUauOxwvAzY'
+TOKEN = 'توکن_شما_را_اینجا_قرار_دهید'
 
 # تابعی که برای دریافت پیام‌ها و پاسخ به آن‌ها استفاده می‌شود
 def handle(msg):
