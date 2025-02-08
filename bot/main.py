@@ -13,7 +13,7 @@ async def start(update: Update, context: CallbackContext):
 # تابع main
 async def main():
     # توکن ربات تلگرام خود را اینجا قرار دهید
-    token = 'YOUR_BOT_TOKEN'
+    token = '8049424440:AAGBPPfMynEI-8PRsZdA-XfcvUauOxwvAzY'
 
     # ایجاد نمونه‌ای از Application
     application = Application.builder().token(token).build()
